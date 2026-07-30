@@ -69,7 +69,7 @@ const Collection = () => {
               >
                 <div>
                   {/* Product Image */}
-                  <div className="product-image-wrapper aspect-[3/4] overflow-hidden relative">
+                  <div className="product-image-wrapper aspect-[3/4] overflow-hidden relative shimmer-gold">
                     <img
                       src={product.image_url}
                       alt={`${product.name} — RA Fragrance`}

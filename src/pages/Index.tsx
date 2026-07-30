@@ -126,7 +126,7 @@ const Index = () => {
             {featuredPerfumes.map((product) => (
               <div key={product.id} className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between">
                 <div>
-                  <div className="product-image-wrapper aspect-[4/5] overflow-hidden">
+                  <div className="product-image-wrapper aspect-[4/5] overflow-hidden shimmer-gold">
                     <img
                       src={product.image_url}
                       alt={`${product.name} by RA Fragrance`}
