@@ -9,6 +9,9 @@ export interface Perfume {
     base: string;
   };
   image_url: string;
+  gallery_images?: string[];
+  price?: string;
+  in_stock?: boolean;
   badge?: string;
   created_at?: string;
 }

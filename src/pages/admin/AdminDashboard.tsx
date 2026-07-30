@@ -20,6 +20,12 @@ import {
   RotateCcw,
   X,
   Package,
+  Copy,
+  CopyCheck,
+  Image as ImageIcon,
+  Star,
+  DollarSign,
+  Tag,
 } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -46,15 +52,15 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
-  // State for Search and Filter
+  // Search, Filter, Toast
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // State for Modal
+  // Modal & Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPerfume, setEditingPerfume] = useState<Perfume | null>(null);
 
-  // Form State
   const [name, setName] = useState("");
   const [category, setCategory] = useState<"Unisex" | "For Him" | "For Her">("Unisex");
   const [tagline, setTagline] = useState("");
@@ -62,12 +68,18 @@ const AdminDashboard = () => {
   const [heartNotes, setHeartNotes] = useState("");
   const [baseNotes, setBaseNotes] = useState("");
   const [badge, setBadge] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [price, setPrice] = useState("PKR 3,500");
+  const [inStock, setInStock] = useState(true);
+
+  // Image & Gallery Management
+  const [mainImageUrl, setMainImageUrl] = useState("");
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [newGalleryUrlInput, setNewGalleryUrlInput] = useState("");
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  // Filtered list
+  // Filtered perfumes list
   const filteredPerfumes = perfumes.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,7 +99,10 @@ const AdminDashboard = () => {
     setHeartNotes("");
     setBaseNotes("");
     setBadge("");
-    setImageUrl("");
+    setPrice("PKR 3,500");
+    setInStock(true);
+    setMainImageUrl("");
+    setGalleryImages([]);
     setIsModalOpen(true);
   };
 
@@ -101,34 +116,86 @@ const AdminDashboard = () => {
     setHeartNotes(p.notes.heart);
     setBaseNotes(p.notes.base);
     setBadge(p.badge || "");
-    setImageUrl(p.image_url);
+    setPrice(p.price || "PKR 3,500");
+    setInStock(p.in_stock !== false);
+    setMainImageUrl(p.image_url);
+    setGalleryImages(p.gallery_images || []);
     setIsModalOpen(true);
   };
 
-  // Handle Image File Selection (Cloudinary upload)
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Clone / Duplicate Perfume
+  const handleClonePerfume = (p: Perfume) => {
+    setEditingPerfume(null);
+    setName(`${p.name} (Copy)`);
+    setCategory(p.category);
+    setTagline(p.tagline);
+    setTopNotes(p.notes.top);
+    setHeartNotes(p.notes.heart);
+    setBaseNotes(p.notes.base);
+    setBadge(p.badge || "");
+    setPrice(p.price || "PKR 3,500");
+    setInStock(true);
+    setMainImageUrl(p.image_url);
+    setGalleryImages(p.gallery_images || []);
+    setIsModalOpen(true);
+    setActionMessage(`Cloned settings from '${p.name}'!`);
+    setTimeout(() => setActionMessage(null), 3000);
+  };
+
+  // Handle Main File Selection (Cloudinary upload)
+  const handleMainFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadingImage(true);
     try {
       const uploadedUrl = await uploadToCloudinary(file);
-      setImageUrl(uploadedUrl);
-      setActionMessage("Image uploaded and optimized!");
+      setMainImageUrl(uploadedUrl);
+      setActionMessage("Main bottle image uploaded successfully!");
       setTimeout(() => setActionMessage(null), 3000);
     } catch (err) {
-      console.error("Failed to upload image:", err);
+      console.error("Failed to upload main image:", err);
       alert("Failed to upload image.");
     } finally {
       setUploadingImage(false);
     }
   };
 
-  // Handle Submit Form
+  // Handle Gallery Image File Selection
+  const handleGalleryFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const uploadedUrl = await uploadToCloudinary(file);
+      setGalleryImages((prev) => [...prev, uploadedUrl]);
+      setActionMessage("Gallery image added!");
+      setTimeout(() => setActionMessage(null), 3000);
+    } catch (err) {
+      console.error("Failed to upload gallery image:", err);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Delete an image from gallery
+  const handleDeleteGalleryImage = (indexToRemove: number) => {
+    setGalleryImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // Set a gallery image as main cover
+  const handleSetAsMainImage = (url: string) => {
+    setMainImageUrl(url);
+    setActionMessage("Set as primary cover image!");
+    setTimeout(() => setActionMessage(null), 3000);
+  };
+
+  // Handle Form Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !imageUrl) {
-      alert("Please fill in Perfume Name and upload/provide an Image URL.");
+    if (!name || !mainImageUrl) {
+      alert("Please fill in Perfume Name and provide a Cover Image.");
       return;
     }
 
@@ -141,7 +208,10 @@ const AdminDashboard = () => {
         heart: heartNotes,
         base: baseNotes,
       },
-      image_url: imageUrl,
+      image_url: mainImageUrl,
+      gallery_images: galleryImages,
+      price: price.trim() || undefined,
+      in_stock: inStock,
       badge: badge.trim() || undefined,
     };
 
@@ -157,13 +227,20 @@ const AdminDashboard = () => {
     setTimeout(() => setActionMessage(null), 4000);
   };
 
-  // Handle Delete
+  // Handle Delete Perfume
   const handleDelete = async (p: Perfume) => {
     if (confirm(`Are you sure you want to delete '${p.name}' from the catalog?`)) {
       await deletePerfume(p.id);
       setActionMessage(`Deleted '${p.name}'`);
       setTimeout(() => setActionMessage(null), 4000);
     }
+  };
+
+  // Copy Image URL to clipboard
+  const handleCopyUrl = (url: string, id: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
@@ -181,7 +258,7 @@ const AdminDashboard = () => {
                 Admin Control Center
               </h1>
               <p className="text-xs text-muted-foreground tracking-[0.2em] uppercase">
-                Manage RA Fragrance Catalog & Inventory
+                Manage Perfumes, Media Gallery & Stock Status
               </p>
             </div>
           </div>
@@ -224,7 +301,7 @@ const AdminDashboard = () => {
 
           <button
             onClick={() => {
-              if (confirm("Reset catalog to initial 7 flagship perfumes?")) {
+              if (confirm("Reset catalog to initial flagship perfumes?")) {
                 resetPerfumes();
                 setActionMessage("Catalog reset to initial products.");
                 setTimeout(() => setActionMessage(null), 3000);
@@ -309,7 +386,7 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* Perfumes Catalog Grid / Table */}
+        {/* Perfumes Catalog Grid */}
         {loading ? (
           <div className="py-16 text-center text-muted-foreground text-sm">
             Loading perfumes catalog...
@@ -319,7 +396,7 @@ const AdminDashboard = () => {
             <Package size={36} className="mx-auto text-muted-foreground mb-3 opacity-40" />
             <h3 className="font-display text-foreground text-lg mb-1">No Perfumes Found</h3>
             <p className="text-xs text-muted-foreground max-w-sm mx-auto mb-4">
-              No products match your search or filter. Add a new perfume to get started.
+              No products match your search. Add a new perfume to update your catalog.
             </p>
             <button onClick={handleOpenAddModal} className="btn-primary text-xs px-6 py-2.5">
               Add First Perfume
@@ -334,9 +411,19 @@ const AdminDashboard = () => {
               >
                 <div>
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-20 h-24 rounded-xl overflow-hidden border border-primary/30 shrink-0 bg-card">
+                    
+                    {/* Primary Image preview */}
+                    <div className="relative w-20 h-24 rounded-xl overflow-hidden border border-primary/30 shrink-0 bg-card group">
                       <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                      <button
+                        onClick={() => handleCopyUrl(p.image_url, p.id)}
+                        title="Copy Image URL"
+                        className="absolute bottom-1 right-1 p-1 rounded bg-black/70 text-primary hover:bg-black transition-colors"
+                      >
+                        {copiedId === p.id ? <CopyCheck size={12} /> : <Copy size={12} />}
+                      </button>
                     </div>
+
                     <div>
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <span className="text-[10px] tracking-widest uppercase font-bold text-primary bg-primary/10 border border-primary/30 px-2.5 py-0.5 rounded-full">
@@ -347,39 +434,73 @@ const AdminDashboard = () => {
                             {p.badge}
                           </span>
                         )}
+                        {p.in_stock === false && (
+                          <span className="text-[10px] tracking-widest uppercase font-bold text-destructive bg-destructive/10 border border-destructive/30 px-2 py-0.5 rounded-full">
+                            Out of Stock
+                          </span>
+                        )}
                       </div>
+                      
                       <h3 className="font-display text-foreground text-xl font-semibold leading-tight mt-1">
                         {p.name}
                       </h3>
                       <p className="text-xs text-muted-foreground italic mt-0.5">{p.tagline}</p>
+                      {p.price && (
+                        <p className="text-xs font-semibold text-primary mt-1">{p.price}</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Notes breakdown */}
-                  <div className="space-y-1 text-[11px] text-muted-foreground pt-3 border-t border-border/40 mb-4">
+                  <div className="space-y-1 text-[11px] text-muted-foreground pt-3 border-t border-border/40 mb-3">
                     <p><strong className="text-primary font-normal">Top:</strong> {p.notes.top}</p>
                     <p><strong className="text-primary font-normal">Heart:</strong> {p.notes.heart}</p>
                     <p><strong className="text-primary font-normal">Base:</strong> {p.notes.base}</p>
                   </div>
+
+                  {/* Image Gallery thumbnails */}
+                  {p.gallery_images && p.gallery_images.length > 0 && (
+                    <div className="pt-2 pb-3 flex items-center gap-2 border-t border-border/30 overflow-x-auto">
+                      <span className="text-[10px] uppercase text-muted-foreground flex items-center gap-1">
+                        <ImageIcon size={12} /> Gallery:
+                      </span>
+                      {p.gallery_images.map((gUrl, idx) => (
+                        <div key={idx} className="w-8 h-8 rounded-lg overflow-hidden border border-primary/20 shrink-0">
+                          <img src={gUrl} alt="Gallery view" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Action Buttons */}
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/40">
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/40">
                   <button
-                    onClick={() => handleOpenEditModal(p)}
-                    className="px-3 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/10 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    onClick={() => handleClonePerfume(p)}
+                    title="Clone Perfume Settings"
+                    className="px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-white/5 text-xs flex items-center gap-1 transition-colors cursor-pointer"
                   >
-                    <Edit size={13} />
-                    <span>Edit</span>
+                    <Copy size={12} />
+                    <span>Clone</span>
                   </button>
 
-                  <button
-                    onClick={() => handleDelete(p)}
-                    className="px-3 py-1.5 rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Trash2 size={13} />
-                    <span>Delete</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleOpenEditModal(p)}
+                      className="px-3 py-1.5 rounded-lg border border-primary/40 text-primary hover:bg-primary/10 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Edit size={13} />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(p)}
+                      className="px-3 py-1.5 rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                      <span>Delete</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -388,10 +509,10 @@ const AdminDashboard = () => {
 
       </div>
 
-      {/* ADD / EDIT PERFUME MODAL */}
+      {/* ADD / EDIT PERFUME & IMAGE GALLERY MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass-card rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-primary/40 shadow-2xl relative my-8 animate-fade-in">
+          <div className="glass-card rounded-3xl p-6 sm:p-8 max-w-2xl w-full border border-primary/40 shadow-2xl relative my-8 animate-fade-in max-h-[90vh] overflow-y-auto">
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 mb-6 border-b border-primary/20">
@@ -407,7 +528,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs font-body">
+            <form onSubmit={handleSubmit} className="space-y-5 text-xs font-body">
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -440,17 +561,32 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
-                  Tagline / Short Description
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. A Memory in Every Drop"
-                  value={tagline}
-                  onChange={(e) => setTagline(e.target.value)}
-                  className="w-full bg-card/90 border border-border/60 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
+                    Tagline / Short Description
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. A Memory in Every Drop"
+                    value={tagline}
+                    onChange={(e) => setTagline(e.target.value)}
+                    className="w-full bg-card/90 border border-border/60 rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="block uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
+                    Display Price Tag (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. PKR 3,500"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full bg-card/90 border border-border/60 rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
 
               {/* Notes Grid */}
@@ -495,8 +631,8 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Badge & Image Upload */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              {/* Badge & Stock Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
                     Special Badge (Optional)
@@ -512,45 +648,131 @@ const AdminDashboard = () => {
 
                 <div>
                   <label className="block uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
-                    Bottle Photo Upload (Cloudinary / File) *
+                    Stock Availability
                   </label>
-                  <div className="flex items-center gap-2">
-                    <label className="btn-outline text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setInStock(!inStock)}
+                    className={`w-full py-2.5 px-4 rounded-xl border text-xs tracking-wider uppercase font-semibold flex items-center justify-between transition-colors ${
+                      inStock
+                        ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-400"
+                        : "bg-destructive/15 border-destructive/40 text-destructive"
+                    }`}
+                  >
+                    <span>Status: {inStock ? "In Stock" : "Out of Stock"}</span>
+                    <span>{inStock ? "✓ Active" : "✕ Disabled"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* IMAGE MANAGEMENT & GALLERY SECTION */}
+              <div className="p-4 rounded-2xl border border-primary/30 bg-card/40 space-y-4">
+                <h3 className="font-display text-primary text-sm font-semibold tracking-wide flex items-center gap-1.5">
+                  <ImageIcon size={16} />
+                  <span>Perfume Image Management & Media Gallery</span>
+                </h3>
+
+                {/* Primary Cover Image Controls */}
+                <div>
+                  <label className="block uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
+                    Primary Cover Bottle Image *
+                  </label>
+                  
+                  <div className="flex items-center gap-3">
+                    <label className="btn-primary text-xs py-2.5 px-4 flex items-center gap-2 cursor-pointer shrink-0">
                       <Upload size={14} />
-                      <span>{uploadingImage ? "Uploading..." : "Browse Photo"}</span>
+                      <span>{uploadingImage ? "Uploading to Cloudinary..." : "Upload Cover Photo"}</span>
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleFileChange}
+                        onChange={handleMainFileChange}
                         disabled={uploadingImage}
                         className="hidden"
                       />
                     </label>
 
-                    {imageUrl && (
-                      <div className="w-10 h-10 rounded-lg overflow-hidden border border-primary/40 shrink-0">
-                        <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    {mainImageUrl ? (
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-14 rounded-xl overflow-hidden border border-primary/50 relative shadow-md">
+                          <img src={mainImageUrl} alt="Cover Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setMainImageUrl("")}
+                          className="px-2.5 py-1 rounded bg-destructive/20 border border-destructive/40 text-destructive text-[11px] hover:bg-destructive/30 transition-colors"
+                        >
+                          Delete Cover
+                        </button>
                       </div>
+                    ) : (
+                      <span className="text-xs text-amber-400 italic">No primary image selected</span>
                     )}
                   </div>
+
+                  <input
+                    type="text"
+                    placeholder="Or paste image URL (https://...)"
+                    value={mainImageUrl}
+                    onChange={(e) => setMainImageUrl(e.target.value)}
+                    className="w-full bg-card/90 border border-border/60 rounded-xl px-3.5 py-2 text-xs text-foreground focus:outline-none focus:border-primary mt-2"
+                  />
                 </div>
+
+                {/* Gallery Images List */}
+                <div className="pt-2 border-t border-border/40">
+                  <label className="block uppercase tracking-wider text-muted-foreground mb-2 font-medium">
+                    Additional Gallery Angles / Photos
+                  </label>
+
+                  <div className="flex items-center gap-2 mb-3">
+                    <label className="btn-outline text-xs py-2 px-3 flex items-center gap-1.5 cursor-pointer shrink-0">
+                      <Plus size={14} />
+                      <span>Upload Gallery Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleGalleryFileChange}
+                        disabled={uploadingImage}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {galleryImages.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {galleryImages.map((gUrl, idx) => (
+                        <div key={idx} className="relative group rounded-xl overflow-hidden border border-primary/30 aspect-square bg-card">
+                          <img src={gUrl} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleSetAsMainImage(gUrl)}
+                              title="Set as Main Cover"
+                              className="p-1.5 rounded-full bg-primary text-background font-bold"
+                            >
+                              <Star size={12} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteGalleryImage(idx)}
+                              title="Delete Image"
+                              className="p-1.5 rounded-full bg-destructive text-white"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground italic">No additional gallery photos added yet.</p>
+                  )}
+                </div>
+
               </div>
 
-              <div>
-                <label className="block uppercase tracking-wider text-muted-foreground mb-1 font-medium">
-                  Direct Image URL (Alternative)
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://res.cloudinary.com/your-cloud/image/upload/perfume.jpg"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="w-full bg-card/90 border border-border/60 rounded-xl px-3.5 py-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-
-              {/* Modal Buttons */}
-              <div className="flex justify-end gap-3 pt-6 border-t border-border/40">
+              {/* Modal Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-border/40">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
