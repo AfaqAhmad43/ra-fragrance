@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/ra-fragrance-logo.png";
-import { Lock, KeyRound, ArrowRight, ShieldCheck } from "lucide-react";
+import { Lock, ArrowRight, ShieldCheck, Mail } from "lucide-react";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 const AdminLogin = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("ahmedkhanra360@gmail.com");
   const [password, setPassword] = useState("");
-  const [passcode, setPasscode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,11 +16,14 @@ const AdminLogin = () => {
     setError(null);
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
     // If Supabase Auth is configured, try Supabase login
-    if (isSupabaseConfigured && supabase && email && password) {
+    if (isSupabaseConfigured && supabase) {
       const { error: sbError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: cleanEmail,
+        password: cleanPassword,
       });
 
       if (sbError) {
@@ -35,14 +37,17 @@ const AdminLogin = () => {
       return;
     }
 
-    // Default Passcode Authentication (Fallback for quick access)
-    // Default Passcode: rafragrance2026 or admin123
-    const validPasscodes = ["rafragrance2026", "admin123", "admin"];
-    if (validPasscodes.includes(passcode.trim().toLowerCase())) {
+    // Default Fallback Authentication for local/development mode
+    const isValidAdmin =
+      (cleanEmail === "ahmedkhanra360@gmail.com" && cleanPassword === "pass123") ||
+      cleanPassword === "admin123" ||
+      cleanPassword === "pass123";
+
+    if (isValidAdmin) {
       sessionStorage.setItem("ra_admin_auth", "true");
       navigate("/admin");
     } else {
-      setError("Invalid Passcode. Enter 'admin123' or your Supabase credentials.");
+      setError("Invalid Email or Password. Check your credentials.");
     }
     setLoading(false);
   };
@@ -68,66 +73,42 @@ const AdminLogin = () => {
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-destructive/15 border border-destructive/30 text-destructive text-xs text-center font-body">
+          <div className="mb-6 p-3.5 rounded-xl bg-destructive/15 border border-destructive/30 text-destructive text-xs text-center font-body">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-5 font-body">
           
-          {isSupabaseConfigured ? (
-            <>
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Admin Email
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@rafragrance.com"
-                    required
-                    className="w-full bg-card/80 border border-border/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary text-foreground"
-                  />
-                </div>
-              </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5 font-medium">
+              <Mail size={14} className="text-primary" />
+              <span>Admin Email</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ahmedkhanra360@gmail.com"
+              required
+              className="w-full bg-card/80 border border-border/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary text-foreground"
+            />
+          </div>
 
-              <div>
-                <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    className="w-full bg-card/80 border border-border/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary text-foreground"
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-primary mb-2 flex items-center gap-1.5 font-medium">
-                <KeyRound size={14} />
-                <span>Enter Admin Passcode</span>
-              </label>
-              <input
-                type="password"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Enter passcode (e.g. admin123)"
-                required
-                className="w-full bg-card/80 border border-primary/40 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-primary text-foreground tracking-widest placeholder:tracking-normal"
-              />
-              <p className="text-[11px] text-muted-foreground mt-2">
-                Default passcode: <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">admin123</code>
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5 font-medium">
+              <Lock size={14} className="text-primary" />
+              <span>Password</span>
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
+              required
+              className="w-full bg-card/80 border border-border/60 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary text-foreground"
+            />
+          </div>
 
           <button
             type="submit"
