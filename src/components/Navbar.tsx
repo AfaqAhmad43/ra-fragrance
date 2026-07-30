@@ -1,12 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import { Menu, X, MessageCircle } from "lucide-react";
+import { Menu, X, MessageCircle, ShieldCheck } from "lucide-react";
 import logo from "@/assets/ra-fragrance-logo.png";
 
 const navLinks = [
   { to: "/", label: "Home" },
   { to: "/collection", label: "Collection" },
   { to: "/about", label: "About Us" },
+  { to: "/admin", label: "Admin Portal" },
 ];
 
 const WHATSAPP_LINK = "https://wa.me/923325553408?text=Hi%2C%20I%27m%20interested%20in%20RA%20Fragrance!";
@@ -42,11 +43,13 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 className={`relative font-body text-xs tracking-[0.2em] uppercase transition-all duration-300 py-1 hover:text-primary ${
-                  pathname === link.to ? "text-primary font-medium" : "text-muted-foreground"
+                  pathname.startsWith(link.to) && (link.to !== "/" || pathname === "/")
+                    ? "text-primary font-medium"
+                    : "text-muted-foreground"
                 }`}
               >
                 {link.label}
-                {pathname === link.to && (
+                {pathname.startsWith(link.to) && (link.to !== "/" || pathname === "/") && (
                   <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r from-primary/20 via-primary to-primary/20 rounded-full animate-fade-in" />
                 )}
               </Link>
@@ -84,7 +87,7 @@ const Navbar = () => {
                 to={link.to}
                 onClick={() => setMobileOpen(false)}
                 className={`block font-body text-sm tracking-[0.2em] uppercase py-2.5 px-3 rounded-lg transition-colors ${
-                  pathname === link.to
+                  pathname.startsWith(link.to) && (link.to !== "/" || pathname === "/")
                     ? "bg-primary/10 text-primary border-l-2 border-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                 }`}

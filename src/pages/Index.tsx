@@ -1,14 +1,15 @@
 import logo from "@/assets/ra-fragrance-logo.png";
-import primeScent from "@/assets/prime-scent.jpeg";
-import everwake from "@/assets/everwake.jpeg";
-import playBoyz from "@/assets/play-boyz.jpeg";
 import { Link } from "react-router-dom";
-import { Sparkles, MessageCircle, Phone, ShieldCheck, Clock, Award, ArrowRight } from "lucide-react";
+import { Sparkles, MessageCircle, Phone, ShieldCheck, Clock, Award, ArrowRight, Shield } from "lucide-react";
+import { usePerfumes } from "@/hooks/usePerfumes";
 
 const WHATSAPP_LINK = "https://wa.me/923325553408?text=Hi%2C%20I%27m%20interested%20in%20RA%20Fragrance!";
 const PHONE_NUMBER = "+92 332 5553408";
 
 const Index = () => {
+  const { perfumes, loading } = usePerfumes();
+  const featuredPerfumes = perfumes.slice(0, 3);
+
   return (
     <main className="bg-background text-foreground overflow-x-hidden min-h-screen">
       
@@ -116,113 +117,52 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Card 1: Prime Scent */}
-          <div className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between">
-            <div>
-              <div className="product-image-wrapper aspect-[4/5] overflow-hidden">
-                <img
-                  src={primeScent}
-                  alt="Prime Scent by RA Fragrance"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute top-3 left-3 bg-background/80 backdrop-blur-md border border-primary/30 text-primary text-[10px] tracking-[0.2em] uppercase font-body px-3 py-1 rounded-full">
-                  Unisex • Premium
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground text-sm font-body">
+            Loading flagship perfumes...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredPerfumes.map((product) => (
+              <div key={product.id} className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between">
+                <div>
+                  <div className="product-image-wrapper aspect-[4/5] overflow-hidden">
+                    <img
+                      src={product.image_url}
+                      alt={`${product.name} by RA Fragrance`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute top-3 left-3 bg-background/80 backdrop-blur-md border border-primary/30 text-primary text-[10px] tracking-[0.2em] uppercase font-body px-3 py-1 rounded-full">
+                      {product.category} {product.badge ? `• ${product.badge}` : ""}
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <h3 className="font-display text-foreground text-2xl tracking-wide font-semibold">{product.name}</h3>
+                    <p className="font-body text-primary text-xs tracking-[0.2em] uppercase mt-1">{product.tagline}</p>
+                    <p className="font-body text-muted-foreground text-xs mt-3 leading-relaxed">
+                      {product.notes.top ? `Notes of ${product.notes.top}, ${product.notes.heart}, and ${product.notes.base}.` : "High concentration luxury fragrance."}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-6 pb-6 pt-2">
+                  <a
+                    href={`${WHATSAPP_LINK}&text=Hi%2C%20I%20want%20to%20order%20${encodeURIComponent(product.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary text-xs w-full py-3 flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle size={15} />
+                    <span>Order {product.name}</span>
+                  </a>
                 </div>
               </div>
-              <div className="p-6">
-                <h3 className="font-display text-foreground text-2xl tracking-wide">Prime Scent</h3>
-                <p className="font-body text-primary text-xs tracking-[0.2em] uppercase mt-1">A Memory in Every Drop</p>
-                <p className="font-body text-muted-foreground text-xs mt-3 leading-relaxed">
-                  Rich amber notes harmonized with smooth woody undertones designed to leave an unforgettable trail.
-                </p>
-              </div>
-            </div>
-            <div className="px-6 pb-6 pt-2">
-              <a
-                href={`${WHATSAPP_LINK}&text=Hi%2C%20I%20want%20to%20order%20Prime%20Scent`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary text-xs w-full py-3 flex items-center justify-center gap-2"
-              >
-                <MessageCircle size={15} />
-                <span>Order Prime Scent</span>
-              </a>
-            </div>
+            ))}
           </div>
-
-          {/* Card 2: Everwake */}
-          <div className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between">
-            <div>
-              <div className="product-image-wrapper aspect-[4/5] overflow-hidden">
-                <img
-                  src={everwake}
-                  alt="Everwake by RA Fragrance"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute top-3 left-3 bg-background/80 backdrop-blur-md border border-primary/30 text-primary text-[10px] tracking-[0.2em] uppercase font-body px-3 py-1 rounded-full">
-                  Unisex • Best Seller
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="font-display text-foreground text-2xl tracking-wide">Everwake</h3>
-                <p className="font-body text-primary text-xs tracking-[0.2em] uppercase mt-1">Bold. Confident. Electric.</p>
-                <p className="font-body text-muted-foreground text-xs mt-3 leading-relaxed">
-                  Vibrant citrus top notes fused with deep oriental spices for an intoxicating, enduring aroma.
-                </p>
-              </div>
-            </div>
-            <div className="px-6 pb-6 pt-2">
-              <a
-                href={`${WHATSAPP_LINK}&text=Hi%2C%20I%20want%20to%20order%20Everwake`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary text-xs w-full py-3 flex items-center justify-center gap-2"
-              >
-                <MessageCircle size={15} />
-                <span>Order Everwake</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Card 3: Play Boyz */}
-          <div className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between">
-            <div>
-              <div className="product-image-wrapper aspect-[4/5] overflow-hidden">
-                <img
-                  src={playBoyz}
-                  alt="Play Boyz by RA Fragrance"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute top-3 left-3 bg-background/80 backdrop-blur-md border border-primary/30 text-primary text-[10px] tracking-[0.2em] uppercase font-body px-3 py-1 rounded-full">
-                  For Him • Edition
-                </div>
-              </div>
-              <div className="p-6">
-                <h3 className="font-display text-foreground text-2xl tracking-wide">Play Boyz</h3>
-                <p className="font-body text-primary text-xs tracking-[0.2em] uppercase mt-1">Charismatic & Audacious</p>
-                <p className="font-body text-muted-foreground text-xs mt-3 leading-relaxed">
-                  Clean aquatic freshness infused with smoky leather and vanilla. A masculine statement piece.
-                </p>
-              </div>
-            </div>
-            <div className="px-6 pb-6 pt-2">
-              <a
-                href={`${WHATSAPP_LINK}&text=Hi%2C%20I%20want%20to%20order%20Play%20Boyz`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary text-xs w-full py-3 flex items-center justify-center gap-2"
-              >
-                <MessageCircle size={15} />
-                <span>Order Play Boyz</span>
-              </a>
-            </div>
-          </div>
-        </div>
+        )}
 
         <div className="text-center mt-12">
           <Link to="/collection" className="btn-outline">
-            View All 7 Fragrances →
+            View All {perfumes.length} Fragrances →
           </Link>
         </div>
       </section>
@@ -269,6 +209,12 @@ const Index = () => {
               <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
               <li><Link to="/collection" className="hover:text-primary transition-colors">Full Collection</Link></li>
               <li><Link to="/about" className="hover:text-primary transition-colors">About RA Fragrance</Link></li>
+              <li>
+                <Link to="/admin" className="text-primary/80 hover:text-primary transition-colors inline-flex items-center gap-1">
+                  <Shield size={12} />
+                  <span>Admin Portal</span>
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -288,8 +234,11 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="max-w-[1200px] mx-auto mt-12 pt-6 border-t border-border/40 text-center font-body text-muted-foreground text-xs">
+        <div className="max-w-[1200px] mx-auto mt-12 pt-6 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 font-body text-muted-foreground text-xs">
           <p>RA FRAGRANCE © {new Date().getFullYear()} — The Essence of Elegance. All Rights Reserved.</p>
+          <Link to="/admin" className="text-primary/70 hover:text-primary transition-colors text-[11px] uppercase tracking-wider">
+            Admin Management
+          </Link>
         </div>
       </footer>
     </main>
