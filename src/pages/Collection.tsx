@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { MessageCircle, Sparkles, Filter, Eye } from "lucide-react";
+import { MessageCircle, Sparkles, Filter } from "lucide-react";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { Perfume } from "@/types/perfume";
-import PerfumeQuickView from "@/components/PerfumeQuickView";
 import { trackEvent } from "@/lib/analytics";
 import confetti from "canvas-confetti";
 
@@ -12,7 +11,6 @@ const categories = ["All", "Unisex", "For Him", "For Her"] as const;
 const Collection = () => {
   const { perfumes, loading } = usePerfumes();
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [selectedPerfume, setSelectedPerfume] = useState<Perfume | null>(null);
 
   const filteredProducts = activeCategory === "All"
     ? perfumes
@@ -42,7 +40,7 @@ const Collection = () => {
             The RA Collection
           </h1>
           <p className="font-body text-muted-foreground text-sm sm:text-base leading-relaxed">
-            Every bottle is an ode to elegance. Filter by preference or click any scent for full details & ratings.
+            Every bottle is an ode to elegance. Filter by preference and select your signature scent.
           </p>
         </header>
 
@@ -83,8 +81,7 @@ const Collection = () => {
             {filteredProducts.map((product) => (
               <article
                 key={product.id}
-                className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between cursor-pointer"
-                onClick={() => setSelectedPerfume(product)}
+                className="glass-card rounded-2xl overflow-hidden glass-card-hover group flex flex-col justify-between"
               >
                 <div>
                   {/* Product Image */}
@@ -95,14 +92,6 @@ const Collection = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       loading="lazy"
                     />
-
-                    {/* Quick View Hover Badge */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                      <span className="bg-background/90 text-primary text-xs font-body tracking-[0.2em] uppercase px-4 py-2 rounded-full border border-primary/40 flex items-center gap-1.5 shadow-xl">
-                        <Eye size={14} />
-                        <span>Quick View & Notes</span>
-                      </span>
-                    </div>
 
                     {/* Category & Badge */}
                     <div className="absolute top-3 left-3 flex gap-2">
@@ -164,10 +153,7 @@ const Collection = () => {
                     href={`${WHATSAPP_BASE}${encodeURIComponent(`Hi, I'm interested in buying ${product.name} from RA Fragrance!`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleWhatsAppOrder(product);
-                    }}
+                    onClick={() => handleWhatsAppOrder(product)}
                     className="btn-primary text-xs w-full py-3.5 flex items-center justify-center gap-2 shadow-lg"
                   >
                     <MessageCircle size={16} />
@@ -200,12 +186,6 @@ const Collection = () => {
         </div>
 
       </div>
-
-      {/* Perfume Quick View Modal */}
-      <PerfumeQuickView
-        perfume={selectedPerfume}
-        onClose={() => setSelectedPerfume(null)}
-      />
     </main>
   );
 };
