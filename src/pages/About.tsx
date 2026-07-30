@@ -1,9 +1,8 @@
-import { Clock, Sparkles, Zap, MapPin, MessageCircle, Instagram, Phone } from "lucide-react";
+import { Clock, Sparkles, Zap, MapPin, MessageCircle, Phone } from "lucide-react";
 import logo from "@/assets/ra-fragrance-logo.png";
 
 const WHATSAPP_LINK = "https://wa.me/923325553408?text=Hi%2C%20I%27m%20interested%20in%20RA%20Fragrance!";
 const PHONE_NUMBER = "+92 332 5553408";
-const INSTAGRAM_URL = "https://www.instagram.com/merascent";
 
 const features = [
   {
@@ -104,13 +103,11 @@ const About = () => {
               <span>Order on WhatsApp</span>
             </a>
             <a
-              href={INSTAGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`tel:${PHONE_NUMBER.replace(/\s/g, "")}`}
               className="btn-outline text-xs flex items-center gap-2"
             >
-              <Instagram size={16} />
-              <span>Follow on Instagram</span>
+              <Phone size={16} />
+              <span>Call Us Direct</span>
             </a>
           </div>
           <div className="mt-8 font-body text-muted-foreground text-xs flex items-center justify-center gap-6 flex-wrap">

@@ -3,11 +3,10 @@ import primeScent from "@/assets/prime-scent.jpeg";
 import everwake from "@/assets/everwake.jpeg";
 import playBoyz from "@/assets/play-boyz.jpeg";
 import { Link } from "react-router-dom";
-import { Sparkles, MessageCircle, Phone, Instagram, ShieldCheck, Clock, Award, ArrowRight } from "lucide-react";
+import { Sparkles, MessageCircle, Phone, ShieldCheck, Clock, Award, ArrowRight } from "lucide-react";
 
 const WHATSAPP_LINK = "https://wa.me/923325553408?text=Hi%2C%20I%27m%20interested%20in%20RA%20Fragrance!";
 const PHONE_NUMBER = "+92 332 5553408";
-const INSTAGRAM_URL = "https://www.instagram.com/merascent";
 
 const Index = () => {
   return (
@@ -284,10 +283,6 @@ const Index = () => {
               <a href={`tel:${PHONE_NUMBER.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-primary transition-colors">
                 <Phone size={16} className="text-primary" />
                 <span>Direct Call: {PHONE_NUMBER}</span>
-              </a>
-              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Instagram size={16} className="text-primary" />
-                <span>Instagram: @merascent</span>
               </a>
             </div>
           </div>
